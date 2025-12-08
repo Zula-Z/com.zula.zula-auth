@@ -89,7 +89,9 @@ logging:
 
 ---
 spring:
-  profiles: dev
+  config:
+    activate:
+      on-profile: dev
 
 zula:
   monitoring:
@@ -102,7 +104,9 @@ zula:
         url: ${ZULA_MONITORING_PROMETHEUS_URL:http://prometheus:9090/api/services/register}
 ---
 spring:
-  profiles: uat
+  config:
+    activate:
+      on-profile: uat
 
 zula:
   monitoring:
@@ -115,7 +119,9 @@ zula:
         url: ${ZULA_MONITORING_PROMETHEUS_URL:https://prometheus.uat.zula/api/services/register}
 ---
 spring:
-  profiles: sit
+  config:
+    activate:
+      on-profile: sit
 
 zula:
   monitoring:
@@ -128,7 +134,9 @@ zula:
         url: ${ZULA_MONITORING_PROMETHEUS_URL:https://prometheus.sit.zula/api/services/register}
 ---
 spring:
-  profiles: prod
+  config:
+    activate:
+      on-profile: prod
 
 zula:
   monitoring:
