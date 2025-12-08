@@ -1,0 +1,141 @@
+spring:
+  application:
+    name: zula-auth
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+  datasource:
+    url: jdbc:postgresql://localhost:5432/zula_auth
+    username: postgres
+    password: TekGhana#12
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: zula_auth
+  flyway:
+    schemas: zula_auth
+    locations: classpath:db/migration
+
+zula:
+  queue:
+    auto-create-queues: true
+    queue-prefix: "zula"
+    exchange-suffix: "-exchange"
+  database:
+    auto-create-schema: true
+    schema-prefix: "zula"
+    enable-auditing: true
+    enable-flyway: true
+  swagger:
+    enabled: true
+    title: "Zula Auth API"
+    description: "Zula Authentication Microservice API"
+    base-package: "com.zula.auth"
+  monitoring:
+    enabled: true
+    application-name: "zula-auth"
+    enable-prometheus: true
+    registration:
+      skip-profiles:
+        - dev
+      grafana:
+        enabled: true
+        url: ${ZULA_MONITORING_GRAFANA_URL:https://grafana.zula-monitoring/api/services/register}
+        metadata:
+          team: auth
+          channel: grafana
+      datahog:
+        enabled: true
+        url: ${ZULA_MONITORING_DATAHOG_URL:https://datahog.zula-monitoring/api/services/register}
+        metadata:
+          team: auth
+          channel: datahog
+      prometheus:
+        enabled: true
+        url: ${ZULA_MONITORING_PROMETHEUS_URL:https://prometheus.zula-monitoring/api/services/register}
+        metadata:
+          job: zula-auth
+          priority: high
+  security:
+    enabled: true
+    jwt-secret: "d47d88ecaa7dcf04294414383bb02716"
+    jwt-expiration: 86400000
+  validation:
+    enabled: true
+    fail-fast: true
+
+server:
+  port: 8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.zula: DEBUG
+    org.springframework.amqp: INFO
+
+---
+spring:
+  profiles: dev
+
+zula:
+  monitoring:
+    registration:
+      grafana:
+        url: ${ZULA_MONITORING_GRAFANA_URL:http://grafana:3000/api/services/register}
+      datahog:
+        url: ${ZULA_MONITORING_DATAHOG_URL:http://datahog:8080/api/services/register}
+      prometheus:
+        url: ${ZULA_MONITORING_PROMETHEUS_URL:http://prometheus:9090/api/services/register}
+---
+spring:
+  profiles: uat
+
+zula:
+  monitoring:
+    registration:
+      grafana:
+        url: ${ZULA_MONITORING_GRAFANA_URL:https://grafana.uat.zula/api/services/register}
+      datahog:
+        url: ${ZULA_MONITORING_DATAHOG_URL:https://datahog.uat.zula/api/services/register}
+      prometheus:
+        url: ${ZULA_MONITORING_PROMETHEUS_URL:https://prometheus.uat.zula/api/services/register}
+---
+spring:
+  profiles: sit
+
+zula:
+  monitoring:
+    registration:
+      grafana:
+        url: ${ZULA_MONITORING_GRAFANA_URL:https://grafana.sit.zula/api/services/register}
+      datahog:
+        url: ${ZULA_MONITORING_DATAHOG_URL:https://datahog.sit.zula/api/services/register}
+      prometheus:
+        url: ${ZULA_MONITORING_PROMETHEUS_URL:https://prometheus.sit.zula/api/services/register}
+---
+spring:
+  profiles: prod
+
+zula:
+  monitoring:
+    registration:
+      grafana:
+        url: ${ZULA_MONITORING_GRAFANA_URL:https://grafana.prod.zula/api/services/register}
+      datahog:
+        url: ${ZULA_MONITORING_DATAHOG_URL:https://datahog.prod.zula/api/services/register}
+      prometheus:
+        url: ${ZULA_MONITORING_PROMETHEUS_URL:https://prometheus.prod.zula/api/services/register}

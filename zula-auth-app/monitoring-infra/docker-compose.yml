@@ -1,0 +1,71 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: zula-auth-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: zula_auth
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: TekGhana#12
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - zula-auth-monitoring
+
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    container_name: zula-auth-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - zula-auth-monitoring
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: zula-auth-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - zula-auth-monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: zula-auth-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: zula
+      GF_SECURITY_ADMIN_PASSWORD: zula1234
+      GF_INSTALL_PLUGINS: grafana-piechart-panel,grafana-simple-json-datasource
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - zula-auth-monitoring
+
+  datahog:
+    image: hashicorp/http-echo:0.2.3
+    container_name: zula-auth-datahog
+    command:
+      - "-listen=:8080"
+      - "-path=/api/services/register"
+      - "-response=Registered"
+    ports:
+      - "8080:8080"
+    networks:
+      - zula-auth-monitoring
+
+volumes:
+  postgres-data:
+
+networks:
+  zula-auth-monitoring:
+    driver: bridge
