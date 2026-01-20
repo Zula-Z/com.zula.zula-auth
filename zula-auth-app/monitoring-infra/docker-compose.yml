@@ -57,7 +57,7 @@ services:
     command:
       - "-listen=:8080"
       - "-path=/api/services/register"
-      - "-response=Registered"
+      - "-text=Registered"
     ports:
       - "8080:8080"
     networks:
