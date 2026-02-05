@@ -1,0 +1,79 @@
+name: Zula Auth CI
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize]
+  push: {}
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Cache Maven
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-zula-auth${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-zula-auth
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: Configure Maven settings for GitHub Packages
+        shell: bash
+        run: |
+          REPO_PATH=Zula-Z/zula
+          cat > $GITHUB_WORKSPACE/settings.xml <<EOF
+          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+            <activeProfiles><activeProfile>github</activeProfile></activeProfiles>
+            <profiles>
+              <profile>
+                <id>github</id>
+                <repositories>
+                  <repository>
+                    <id>github</id>
+                    <name>GitHub zula Apache Maven Packages</name>
+                    <url>https://maven.pkg.github.com/${REPO_PATH}</url>
+                    <snapshots><enabled>true</enabled></snapshots>
+                  </repository>
+                </repositories>
+              </profile>
+            </profiles>
+            <servers>
+              <server>
+                <id>github</id>
+                <username>${GITHUB_ACTOR}</username>
+                <password>${{ secrets.PACKAGES_TOKEN != '' && secrets.PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}</password>
+              </server>
+            </servers>
+          </settings>
+          EOF
+      - name: Build with Maven
+        env:
+          GITHUB_TOKEN: ${{ secrets.PACKAGES_TOKEN != '' && secrets.PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+        run: mvn -s $GITHUB_WORKSPACE/settings.xml -U clean install -DskipTests
+      - name: Publish messages module
+        if: ${{ github.ref == 'refs/heads/main' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.PACKAGES_TOKEN != '' && secrets.PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          TARGET_REPO=Zula-Z/zula
+          mvn -s $GITHUB_WORKSPACE/settings.xml -pl zula-auth-messages -am deploy -DskipTests \
+            -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/${TARGET_REPO}
+      - name: Publish checks (placeholder)
+        run: echo "Checks reported by GitHub automatically from job status."
